@@ -34,11 +34,36 @@ export function getDatabase(): DatabaseCtor {
   }
 
   // Node runtime — try built-in `node:sqlite` first. It exposes `DatabaseSync`
-  // which matches bun:sqlite's synchronous prepare/run/all/get API surface
-  // that this project uses.
+  // with the synchronous prepare/all/get/close API surface that matches
+  // bun:sqlite. One gap: bun:sqlite (and better-sqlite3) expose `db.run(sql)`
+  // for executing a single SQL statement without bindings — used throughout
+  // this project for PRAGMA and CREATE INDEX setup. `node:sqlite`'s
+  // DatabaseSync uses `db.exec(sql)` for that surface, so we subclass to
+  // alias `db.run(sql)` onto `db.exec(sql)` (param-bound `db.run(sql, ...)`
+  // is preserved for any future callers, falling back to a prepared statement).
   try {
-    const nodeSqlite = req("node:sqlite") as { DatabaseSync: DatabaseCtor };
-    Database = nodeSqlite.DatabaseSync;
+    interface NodeStatementSync {
+      run(...params: unknown[]): unknown;
+      all(...params: unknown[]): unknown[];
+      get(...params: unknown[]): unknown;
+    }
+    interface NodeDatabaseSync {
+      exec(sql: string): unknown;
+      prepare(sql: string): NodeStatementSync;
+      close(): void;
+    }
+    type NodeDatabaseSyncCtor = new (filename?: string, options?: unknown) => NodeDatabaseSync;
+    const DatabaseSync = (req("node:sqlite") as { DatabaseSync: NodeDatabaseSyncCtor })
+      .DatabaseSync;
+    class DatabaseSyncCompat extends DatabaseSync {
+      run(sql: string, ...params: unknown[]): unknown {
+        if (params.length === 0) {
+          return this.exec(sql);
+        }
+        return this.prepare(sql).run(...params);
+      }
+    }
+    Database = DatabaseSyncCompat as unknown as DatabaseCtor;
     return Database;
   } catch {
     // node:sqlite isn't available (Node < 22.5, or experimental flag not set
