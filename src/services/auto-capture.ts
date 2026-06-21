@@ -125,7 +125,36 @@ export async function performAutoCapture(
           })
           .catch(() => {});
       }
+    } else {
+      if (CONFIG.showErrorToasts) {
+        await ctx.client?.tui
+          .showToast({
+            body: {
+              title: "Auto Capture Failed",
+              message: "Memory save failed: " + (result.error || "Unknown error"),
+              variant: "error",
+              duration: 5000,
+            },
+          })
+          .catch(() => {});
+      }
     }
+  } catch (error) {
+    if (CONFIG.showErrorToasts) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const shortReason = errMsg.length > 100 ? errMsg.substring(0, 100) + "..." : errMsg;
+      await ctx.client?.tui
+        .showToast({
+          body: {
+            title: "Auto Capture Failed",
+            message: shortReason,
+            variant: "error",
+            duration: 5000,
+          },
+        })
+        .catch(() => {});
+    }
+    throw error;
   } finally {
     // Release any in-progress claim that did not reach a terminal state.
     // This covers both early returns (no AI response yet, missing client,
