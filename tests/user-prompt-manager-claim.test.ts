@@ -119,8 +119,7 @@ describe("UserPromptManager.claimPrompt / releaseClaim", () => {
     const id = mgr.savePrompt("session-retries", "msg-1", "/path", "hello retry");
 
     for (let i = 0; i < 4; i++) {
-      mgr.claimPrompt(id);
-      mgr.releaseClaim(id);
+      mgr.recordFailedAttempt(id);
     }
 
     const prompt = mgr.getLastUncapturedPrompt("session-retries");

@@ -112,10 +112,17 @@ export class UserPromptManager {
 
   claimPrompt(promptId: string): boolean {
     const stmt = this.db.prepare(
-      `UPDATE user_prompts SET captured = 2, capture_attempts = capture_attempts + 1 WHERE id = ? AND captured = 0`
+      `UPDATE user_prompts SET captured = 2 WHERE id = ? AND captured = 0`
     );
     const result = stmt.run(promptId);
     return result.changes > 0;
+  }
+
+  recordFailedAttempt(promptId: string): void {
+    const stmt = this.db.prepare(
+      `UPDATE user_prompts SET capture_attempts = capture_attempts + 1 WHERE id = ?`
+    );
+    stmt.run(promptId);
   }
 
   /**

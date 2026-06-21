@@ -130,6 +130,8 @@ export async function performAutoCapture(
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : String(error);
 
+        userPromptManager.recordFailedAttempt(prompt.id);
+
         if (attempt < maxRetries) {
           log(`Auto-capture warning (attempt ${attempt}/${maxRetries})`, { error: errMsg });
           await new Promise((resolve) =>
