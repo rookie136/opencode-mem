@@ -22,31 +22,27 @@ export function buildMemoryProviderConfig(
 ): ProviderConfig {
   const memoryModel = config.memoryModel;
   const memoryApiUrl = config.memoryApiUrl;
+  const memoryApiKey = config.memoryApiKey;
+  const missingFields: string[] = [];
+  const issues: string[] = [];
 
-  if (!memoryModel || !memoryApiUrl) {
-    const missingFields: string[] = [];
-    if (!memoryModel) missingFields.push("memoryModel");
-    if (!memoryApiUrl) missingFields.push("memoryApiUrl");
+  if (!memoryModel) missingFields.push("memoryModel");
+  if (!memoryApiUrl) missingFields.push("memoryApiUrl");
+  if (!memoryApiKey) missingFields.push("memoryApiKey");
+  if (missingFields.length > 0) issues.push(`missing ${missingFields.join(", ")}`);
 
-    throw new Error(
-      `External API not configured for memory provider: missing ${missingFields.join(", ")}`
-    );
+  if (isPlaceholderApiKey(memoryApiKey)) {
+    issues.push("replace the placeholder memoryApiKey value");
   }
 
-  if (isPlaceholderApiKey(config.memoryApiKey)) {
-    throw new Error(
-      "External API not configured for memory provider: replace the placeholder memoryApiKey value"
-    );
-  }
-
-  if (!config.memoryApiKey) {
-    throw new Error("External API not configured for memory provider: missing memoryApiKey");
+  if (!memoryModel || !memoryApiUrl || !memoryApiKey || issues.length > 0) {
+    throw new Error(`External API not configured for memory provider: ${issues.join("; ")}`);
   }
 
   return {
     model: memoryModel,
     apiUrl: memoryApiUrl,
-    apiKey: config.memoryApiKey,
+    apiKey: memoryApiKey,
     memoryTemperature: config.memoryTemperature,
     extraParams: config.memoryExtraParams,
     maxIterations: overrides.maxIterations ?? config.autoCaptureMaxIterations,
