@@ -104,7 +104,7 @@ describe("AI provider config", () => {
 
   it("reports each missing manual provider field before a provider request is built", () => {
     expect(() => buildMemoryProviderConfig({})).toThrow(
-      "missing memoryModel, memoryApiUrl, memoryApiKey"
+      "missing memoryModel; missing memoryApiUrl; missing memoryApiKey"
     );
   });
 
@@ -113,7 +113,9 @@ describe("AI provider config", () => {
       buildMemoryProviderConfig({
         memoryApiKey: "sk-...",
       })
-    ).toThrow("missing memoryModel, memoryApiUrl; replace the placeholder memoryApiKey value");
+    ).toThrow(
+      "missing memoryModel; missing memoryApiUrl; replace the placeholder memoryApiKey value"
+    );
   });
 
   it("requires an API key for manual provider endpoints", () => {

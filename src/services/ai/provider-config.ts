@@ -23,19 +23,14 @@ export function buildMemoryProviderConfig(
   const memoryModel = config.memoryModel;
   const memoryApiUrl = config.memoryApiUrl;
   const memoryApiKey = config.memoryApiKey;
-  const missingFields: string[] = [];
   const issues: string[] = [];
 
-  if (!memoryModel) missingFields.push("memoryModel");
-  if (!memoryApiUrl) missingFields.push("memoryApiUrl");
-  if (!memoryApiKey) missingFields.push("memoryApiKey");
-  if (missingFields.length > 0) issues.push(`missing ${missingFields.join(", ")}`);
+  if (!memoryModel) issues.push("missing memoryModel");
+  if (!memoryApiUrl) issues.push("missing memoryApiUrl");
+  if (!memoryApiKey) issues.push("missing memoryApiKey");
+  if (isPlaceholderApiKey(memoryApiKey)) issues.push("replace the placeholder memoryApiKey value");
 
-  if (isPlaceholderApiKey(memoryApiKey)) {
-    issues.push("replace the placeholder memoryApiKey value");
-  }
-
-  if (!memoryModel || !memoryApiUrl || !memoryApiKey || issues.length > 0) {
+  if (issues.length > 0 || !memoryModel || !memoryApiUrl || !memoryApiKey) {
     throw new Error(`External API not configured for memory provider: ${issues.join("; ")}`);
   }
 
